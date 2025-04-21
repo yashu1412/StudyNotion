@@ -1,7 +1,8 @@
 const Category = require("../models/Category")
-const Course = require("../models/Course")
 
-//create category
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max)
+}
 exports.createCategory = async (req, res) => {
   try {
     const { name, description } = req.body
@@ -27,125 +28,90 @@ exports.createCategory = async (req, res) => {
   }
 }
 
-//show all category
 exports.showAllCategories = async (req, res) => {
   try {
-    // Fetch all categories and populate their courses with full details
-    const allCategories = await Category.find().populate({
-      path: 'courses',
-      model: 'Course'
-    });
-
+    const allCategorys = await Category.find()
     res.status(200).json({
       success: true,
-      data: allCategories,
-    });
+      data: allCategorys,
+    })
   } catch (error) {
     return res.status(500).json({
       success: false,
       message: error.message,
-    });
+    })
   }
-};
+}
 
-//category page
 exports.categoryPageDetails = async (req, res) => {
   try {
-    // Fetch all categories
-    const allcategories = await Category.find();
-    console.log("all category" , allcategories)
+    const { categoryId } = req.body
 
-    // Check if any categories exist
-    if (allcategories.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No categories found",
-      });
-    }
+    // Get courses for the specified category
+    const selectedCategory = await Category.findById(categoryId)
+      .populate({
+        path: "courses",
+        match: { status: "Published" },
+        populate: "ratingAndReviews",
+      })
+      .exec()
 
-    // Extract the ID of the category
-    const categoryId = allcategories[0]._id;
-
-    // Fetch the selected category by ID
-    const selectedCategory = await Category.findById(categoryId);
-
-    console.log("SELECTED CATEGORY:", selectedCategory);
-
-    // Handle the case when the selected category is not found
+    console.log("SELECTED COURSE", selectedCategory)
+    // Handle the case when the category is not found
     if (!selectedCategory) {
-      return res.status(404).json({
-        success: false,
-        message: "Category not found",
-      });
+      console.log("Category not found.")
+      return res
+        .status(404)
+        .json({ success: false, message: "Category not found" })
     }
-
-    // Handle the case when the selected category has no courses
+    // Handle the case when there are no courses
     if (selectedCategory.courses.length === 0) {
+      console.log("No courses found for the selected category.")
       return res.status(404).json({
         success: false,
         message: "No courses found for the selected category.",
-      });
+      })
     }
 
-    // Get a random different category excluding the selected one
+    // Get courses for other categories
     const categoriesExceptSelected = await Category.find({
       _id: { $ne: categoryId },
-    });
-
-    let differentCategory = null;
-    if (categoriesExceptSelected.length > 0) {
-      const randomIndex = Math.floor(Math.random() * categoriesExceptSelected.length);
-      differentCategory = await Category.findById(categoriesExceptSelected[randomIndex]._id);
-    }
-
-    console.log("Different CATEGORY:", differentCategory);
-
-    // Fetch course details for selected category
-    const selectedCategoryCourses = await Course.find({
-      _id: { $in: selectedCategory.courses }
-    });
-
-    // Fetch course details for the different category (if exists)
-    let differentCategoryCourses = [];
-    if (differentCategory) {
-      differentCategoryCourses = await Course.find({
-        _id: { $in: differentCategory.courses }
-      });
-    }
-
-    // Fetch top-selling courses across all categories
-    const allCategories = await Category.find();
-    const allCourses = allCategories.flatMap((category) => category.courses);
-    const mostSellingCourses = await Course.find({
-      _id: { $in: allCourses }
     })
-      .sort({ sold: -1 })
-      .limit(10);
+    let differentCategory = await Category.findOne(
+      categoriesExceptSelected[getRandomInt(categoriesExceptSelected.length)]
+        ._id
+    )
+      .populate({
+        path: "courses",
+        match: { status: "Published" },
+      })
+      .exec()
+    console.log()
+    // Get top-selling courses across all categories
+    const allCategories = await Category.find()
+      .populate({
+        path: "courses",
+        match: { status: "Published" },
+      })
+      .exec()
+    const allCourses = allCategories.flatMap((category) => category.courses)
+    const mostSellingCourses = allCourses
+      .sort((a, b) => b.sold - a.sold)
+      .slice(0, 10)
 
-    console.log("Most Selling Courses:", mostSellingCourses);
-
-    // Return the response with selected category details, a different category, and top-selling courses
     res.status(200).json({
       success: true,
       data: {
-        selectedCategory: {
-          ...selectedCategory.toObject(),
-          courses: selectedCategoryCourses,
-        },
-        differentCategory: differentCategory ? {
-          ...differentCategory.toObject(),
-          courses: differentCategoryCourses,
-        } : null,
+        selectedCategory,
+        differentCategory,
         mostSellingCourses,
       },
-    });
+    })
   } catch (error) {
     return res.status(500).json({
       success: false,
       message: "Internal server error",
       error: error.message,
-    });
+    })
   }
-};
-
-
+}
