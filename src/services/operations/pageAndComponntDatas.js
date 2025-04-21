@@ -8,7 +8,7 @@ export const getCatalogPageData = async (categoryId) => {
 
   try {
     // Send a POST request to fetch the catalog page data
-    const response = await apiConnector("GET", catalogData.CATALOGPAGEDATA_API, {
+    const response = await apiConnector("POST", catalogData.CATALOGPAGEDATA_API, {
       categoryId: categoryId, // Include the categoryId in the request body
     });
 
