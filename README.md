@@ -1,6 +1,3 @@
-Sure! Here's a clean and professional `README.md` file you can use for your **StudyNotion - EdTech Platform** project:
-
----
 
 ```markdown
 # 📚 StudyNotion - EdTech Platform
