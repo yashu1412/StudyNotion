@@ -1,5 +1,4 @@
 
-```markdown
 # 📚 StudyNotion - EdTech Platform
 
 StudyNotion is a fully-featured EdTech web application designed to provide an engaging and seamless learning experience. It allows users to explore, enroll in, and manage online courses. This platform includes role-based access for students and instructors, secure authentication, and interactive learning features.
@@ -109,6 +108,3 @@ This project is open-source and available under the [MIT License](LICENSE).
 📧 yashpalsinghpawara@gmail.com  
 ```
 
----
-
-Let me know if you'd like to add screenshots, specific routes/endpoints, or badges like GitHub stars, forks, or license indicators.
